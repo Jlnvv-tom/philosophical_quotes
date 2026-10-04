@@ -118,3 +118,15 @@ pnpm build
 ```
 
 无服务器、无环境变量、无构建期网络请求。
+
+### 自动发布（GitHub Pages）
+
+`.github/workflows/deploy.yml` 会在每次 push 到 `master`（或手动 `workflow_dispatch`）时：
+`pnpm install` → `pnpm typecheck` → `pnpm build` → 发布到 GitHub Pages。
+
+首次使用需在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**，之后工作流会在
+`Deploy to GitHub Pages` 环境里输出线上地址。
+
+部署到项目页（`https://<user>.github.io/philosophical_quotes/`）时，工作流会自动传入
+`NEXT_PUBLIC_BASE_PATH=/philosophical_quotes`，`next.config.ts` 据此设置 `basePath`，
+站内所有 `next/link` 与静态资源路径都会带上前缀；本地开发与部署到根域名时无需该变量。

@@ -1,0 +1,82 @@
+name: Deploy to GitHub Pages
+
+on:
+  # 推送到主分支自动发布；也可在 Actions 面板手动触发
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+# GitHub Pages 部署所需的最小权限
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只允许一个 Pages 部署，排队等待而不是互相打断
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 未指定 version 时，自动读取 package.json 的 packageManager 字段（pnpm@11）
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        # 仓库当前只有 package-lock.json，没有 pnpm-lock.yaml，故不启用 lockfile 冻结校验
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      # 项目页（xxx.github.io/<repo>/）需要 basePath，用户/组织页则不需要
+      - name: Resolve base path
+        id: base
+        run: |
+          repo="${GITHUB_REPOSITORY##*/}"
+          owner="${GITHUB_REPOSITORY%%/*}"
+          if [ "$repo" = "$owner.github.io" ]; then
+            echo "path=" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=/$repo" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build (static export → out/)
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_BASE_PATH: ${{ steps.base.outputs.path }}
+
+      # 产物含 _next 目录，必须阻止 Jekyll 处理
+      - name: Disable Jekyll
+        run: touch out/.nojekyll
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: out
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
