@@ -1,0 +1,199 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ──────────────────────────────────────────────
+   哲思 · 设计令牌
+   极简学术 · 衬线排版：米白纸面 / 墨色文字 / 朱砂点缀
+   ────────────────────────────────────────────── */
+@layer base {
+  :root {
+    --paper: 250 248 243;
+    --surface: 255 255 254;
+    --sunk: 244 241 234;
+
+    --ink: 26 24 21;
+    --ink-soft: 62 58 52;
+    --ink-muted: 122 115 104;
+    --ink-faint: 158 150 138;
+
+    --line: 226 220 208;
+    --line-soft: 238 233 224;
+
+    --accent: 154 58 44;
+    --jade: 58 92 82;
+
+    --font-serif: "EB Garamond", "Songti SC", "Songti TC", "Source Han Serif SC",
+      "Source Han Serif CN", "Noto Serif SC", "Noto Serif CJK SC", "STSong",
+      "SimSun", Georgia, "Times New Roman", serif;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", "JetBrains Mono", ui-monospace, Menlo, Consolas,
+      monospace;
+
+    color-scheme: light;
+  }
+
+  .dark {
+    --paper: 17 16 14;
+    --surface: 25 24 21;
+    --sunk: 21 20 18;
+
+    --ink: 240 236 228;
+    --ink-soft: 205 199 188;
+    --ink-muted: 148 141 130;
+    --ink-faint: 108 103 94;
+
+    --line: 50 47 42;
+    --line-soft: 38 36 32;
+
+    --accent: 212 108 88;
+    --jade: 124 168 152;
+
+    color-scheme: dark;
+  }
+
+  * {
+    border-color: rgb(var(--line));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-paper text-ink font-serif antialiased;
+    font-feature-settings: "kern" 1, "liga" 1;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* 中文正文的呼吸感 */
+  p,
+  blockquote {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: rgb(var(--accent) / 0.16);
+    color: rgb(var(--ink));
+  }
+
+  /* 纸质纹理：极轻的噪点，避免大面积纯色发"平" */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.5;
+    background-image: radial-gradient(
+      rgb(var(--ink) / 0.055) 0.5px,
+      transparent 0.5px
+    );
+    background-size: 3px 3px;
+  }
+
+  .dark body::before {
+    opacity: 0.32;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgb(var(--paper));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--line));
+    border-radius: 9999px;
+    border: 3px solid rgb(var(--paper));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--ink-faint));
+  }
+}
+
+@layer components {
+  /* 章节编号：学术书的 figure number 感 */
+  .eyebrow {
+    @apply font-sans text-2xs uppercase tracking-widest2 text-ink-faint;
+  }
+
+  /* 首字下沉，用于长引文 */
+  .dropcap::first-letter {
+    float: left;
+    font-size: 3.1em;
+    line-height: 0.86;
+    padding-right: 0.14em;
+    padding-top: 0.06em;
+    color: rgb(var(--accent));
+  }
+
+  /* 竖排小标签 */
+  .vertical-label {
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    letter-spacing: 0.35em;
+  }
+
+  .rule-ornament {
+    @apply inline-flex items-center gap-3 text-ink-faint;
+  }
+  .rule-ornament::before,
+  .rule-ornament::after {
+    content: "";
+    @apply h-px w-8 bg-line;
+  }
+
+  .link-underline {
+    background-image: linear-gradient(rgb(var(--accent)), rgb(var(--accent)));
+    background-repeat: no-repeat;
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    transition: background-size 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+
+  .focus-ring {
+    @apply outline-none ring-offset-2 ring-offset-paper focus-visible:ring-2 focus-visible:ring-accent/60;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body::before,
+  header,
+  footer {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+  }
+}

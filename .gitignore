@@ -1,0 +1,14 @@
+# 依赖
+node_modules/
+
+# 构建产物与缓存
+.next/
+.next*/
+out/
+out*/
+
+# 杂项
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+.env*.local
