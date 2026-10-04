@@ -35,8 +35,8 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        # 仓库当前只有 package-lock.json，没有 pnpm-lock.yaml，故不启用 lockfile 冻结校验
-        run: pnpm install --no-frozen-lockfile
+        # 依赖 pnpm-lock.yaml（已随仓库提交），CI 下默认冻结校验
+        run: pnpm install --frozen-lockfile
 
       - name: Typecheck
         run: pnpm typecheck

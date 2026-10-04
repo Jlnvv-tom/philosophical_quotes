@@ -119,6 +119,9 @@ pnpm build
 
 无服务器、无环境变量、无构建期网络请求。
 
+> 仓库以 pnpm 为准（`packageManager` 字段），CI 依赖 `pnpm-lock.yaml`。改动依赖后请提交新的
+> `pnpm-lock.yaml`，否则部署会因 `--frozen-lockfile` 校验失败。
+
 ### 自动发布（GitHub Pages）
 
 `.github/workflows/deploy.yml` 会在每次 push 到 `master`（或手动 `workflow_dispatch`）时：
