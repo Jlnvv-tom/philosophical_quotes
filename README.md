@@ -127,8 +127,15 @@ pnpm build
 `.github/workflows/deploy.yml` 会在每次 push 到 `master`（或手动 `workflow_dispatch`）时：
 `pnpm install` → `pnpm typecheck` → `pnpm build` → 发布到 GitHub Pages。
 
-首次使用需在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**，之后工作流会在
-`Deploy to GitHub Pages` 环境里输出线上地址。
+工作流会先调用 REST API 幂等地确认 Pages 已启用且 **Source = GitHub Actions**，未启用时自动开启，
+因此正常情况下无需手工配置。若自动开启失败（token 权限不足），按日志提示处理：
+
+1. **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**；
+2. **Settings → Actions → General → Workflow permissions** 选 **Read and write permissions**。
+
+`actions/configure-pages` / `actions/deploy-pages` 在 Pages 未启用时会因
+`GET /repos/{owner}/{repo}/pages` 返回 404 而报 `HttpError: Not Found`，上面这步就是为此加的兜底。
+部署成功后地址会出现在 `Deploy to GitHub Pages` 环境里。
 
 部署到项目页（`https://<user>.github.io/philosophical_quotes/`）时，工作流会自动传入
 `NEXT_PUBLIC_BASE_PATH=/philosophical_quotes`，`next.config.ts` 据此设置 `basePath`，

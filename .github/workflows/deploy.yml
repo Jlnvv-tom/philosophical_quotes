@@ -6,7 +6,7 @@ on:
     branches: [master]
   workflow_dispatch:
 
-# GitHub Pages 部署所需的最小权限
+# GitHub Pages 部署所需的最小权限（pages: write 同时用于启用站点）
 permissions:
   contents: read
   pages: write
@@ -22,14 +22,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # 未指定 version 时，自动读取 package.json 的 packageManager 字段（pnpm@11）
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -58,15 +58,55 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: ${{ steps.base.outputs.path }}
 
-      # 产物含 _next 目录，必须阻止 Jekyll 处理
-      - name: Disable Jekyll
-        run: touch out/.nojekyll
+      # 关键修复：仓库尚未启用 Pages 时，configure-pages / deploy-pages 会因
+      # GET /repos/{owner}/{repo}/pages 返回 404 而失败（HttpError: Not Found）。
+      # 第 1 道：自己调 REST API 幂等地启用站点，并把 Source 固定为 GitHub Actions。
+      # 失败不算致命（GITHUB_TOKEN 未必有建站权限），交给下一道官方兜底再试。
+      - name: "Ensure GitHub Pages is enabled (source: GitHub Actions)"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          api="repos/${GITHUB_REPOSITORY}/pages"
 
+          if build_type="$(gh api "$api" --jq '.build_type' 2>/dev/null)"; then
+            echo "GitHub Pages 已启用，当前 build_type=${build_type:-unknown}"
+            if [ "$build_type" != "workflow" ]; then
+              echo "将 Pages 源切换为 GitHub Actions（build_type=workflow）..."
+              gh api --method PUT "$api" -f build_type=workflow >/dev/null || true
+            fi
+          elif gh api --method POST "$api" -f build_type=workflow >/dev/null; then
+            echo "GitHub Pages 已自动启用（build_type=workflow）"
+          else
+            echo "::warning::GITHUB_TOKEN 无权自动创建 Pages 站点，改用 configure-pages 的 enablement 兜底重试"
+          fi
+
+      # 第 2 道：官方 enablement（未启用时自动开启）。失败不致命，留给下一步给明确提示。
+      # 注意：artifact 模式下 Pages 由 GitHub 直接托管静态文件、不经过 Jekyll，
+      # 因此无需 .nojekyll（隐藏文件默认也不会被打包，见 include-hidden-files）。
       - name: Setup Pages
-        uses: actions/configure-pages@v5
+        uses: actions/configure-pages@v6
+        continue-on-error: true
+        with:
+          enablement: true
 
+      # 第 3 道：确认站点真的启用了，否则给出可操作的中文报错，而不是让后面的部署以 404 收场。
+      - name: Verify Pages is enabled
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -uo pipefail
+          if out="$(gh api "repos/${GITHUB_REPOSITORY}/pages" --jq '.build_type' 2>/dev/null)"; then
+            echo "Pages 已就绪，build_type=${out:-unknown}"
+          else
+            echo "::error title=GitHub Pages 仍未启用::自动启用失败（GITHUB_TOKEN 不具备该权限）。请手动打开 Settings → Pages → Build and deployment → Source，选择 “GitHub Actions”，并确认 Settings → Actions → General → Workflow permissions 为 “Read and write permissions”，然后重新运行本工作流。"
+            exit 1
+          fi
+
+      # 注意：artifact 模式下的 Pages 由 GitHub 直接托管静态文件，不经过 Jekyll，
+      # 因此无需 .nojekyll（隐藏文件默认也不会被打包，见 include-hidden-files）。
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: out
 
@@ -79,4 +119,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
