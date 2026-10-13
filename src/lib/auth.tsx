@@ -53,7 +53,9 @@ function translateAuthError(message: string): string {
   if (message.includes("Email not confirmed"))
     return "邮箱尚未验证，请先到邮箱点击确认链接";
   if (message.includes("already registered")) return "该邮箱已注册，请直接登录";
-  if (message.includes("Unable to validate email")) return "邮箱格式不正确";
+  if (message.includes("Unable to validate email") || message.includes("is invalid"))
+    return "该邮箱不被接受，请换用常用邮箱（QQ / 163 / Gmail 等）";
+  if (message.includes("rate limit")) return "邮件发送过于频繁，请稍后再试";
   return message;
 }
 
