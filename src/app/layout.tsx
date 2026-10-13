@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { stats } from "@/data";
+import { AuthProvider } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: {
@@ -49,13 +50,15 @@ export default function RootLayout({
         >
           跳到正文
         </a>
-        <SiteHeader />
-        <main id="main" className="relative z-[1]">
-          {children}
-        </main>
-        <div className="relative z-[1]">
-          <SiteFooter />
-        </div>
+        <AuthProvider>
+          <SiteHeader />
+          <main id="main" className="relative z-[1]">
+            {children}
+          </main>
+          <div className="relative z-[1]">
+            <SiteFooter />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

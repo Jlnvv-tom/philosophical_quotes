@@ -6,6 +6,8 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
 import { ThemeToggle } from "./theme-toggle";
+import { UserMenu } from "./user-menu";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -20,6 +22,7 @@ const NAV = [
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { configured, user, openAuth, signOut } = useAuth();
 
   const isActive = (href: string) =>
     href === "/" ? pathname === "/" : pathname.startsWith(href);
@@ -65,6 +68,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <UserMenu />
           <ThemeToggle />
           <button
             type="button"
@@ -104,6 +108,43 @@ export function SiteHeader() {
                 </span>
               </Link>
             ))}
+
+            {configured && (
+              <div className="mt-2 border-t border-line-soft pt-3">
+                {user ? (
+                  <>
+                    <Link
+                      href="/favorites/"
+                      onClick={() => setOpen(false)}
+                      className="focus-ring flex items-center justify-between rounded-md px-2 py-3 font-sans text-sm text-ink-soft transition-colors hover:text-ink"
+                    >
+                      我的收藏
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        setOpen(false);
+                        await signOut();
+                      }}
+                      className="focus-ring flex w-full items-center justify-between rounded-md px-2 py-3 font-sans text-sm text-ink-soft transition-colors hover:text-accent"
+                    >
+                      退出登录
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      openAuth();
+                    }}
+                    className="focus-ring flex w-full items-center justify-between rounded-md px-2 py-3 font-sans text-sm text-ink-soft transition-colors hover:text-ink"
+                  >
+                    登录 / 注册
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </nav>
       )}

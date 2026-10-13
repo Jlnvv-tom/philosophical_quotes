@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { QuoteActions } from "@/components/quote-actions";
 import { philosopherBySlug, themeBySlug } from "@/data";
 import type { Quote } from "@/data/types";
 import { cn } from "@/lib/utils";
@@ -74,6 +75,12 @@ export function QuoteCard({
           </div>
         )}
       </figcaption>
+
+      <QuoteActions
+        quoteId={quote.id}
+        shareText={`「${quote.text}」 —— ${author.name} · ${quote.source}`}
+        className="relative mt-4 border-t border-line-soft pt-3"
+      />
     </figure>
   );
 }
@@ -132,6 +139,12 @@ export function QuoteRow({
             })}
           </span>
         </div>
+
+        <QuoteActions
+          quoteId={quote.id}
+          shareText={`「${quote.text}」 —— ${author.name} · ${quote.source}`}
+          className="mt-4"
+        />
       </div>
     </article>
   );

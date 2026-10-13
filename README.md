@@ -39,13 +39,18 @@ src/
 │   ├── about/page.tsx             # 编辑原则与来源说明
 │   └── not-found.tsx              # 404
 ├── components/
-│   ├── site-header.tsx            # 吸顶导航（含移动端菜单）
+│   ├── site-header.tsx            # 吸顶导航（含移动端菜单与登录入口）
 │   ├── site-footer.tsx
 │   ├── theme-toggle.tsx           # 深浅色切换（localStorage + 防白闪）
 │   ├── featured-quote.tsx         # 首页「今日一则」（确定性子 + 换一则 + 复制）
 │   ├── random-quote.tsx           # 随机展示
 │   ├── quote-browser.tsx          # 名言页的筛选 / 搜索逻辑
-│   ├── quote-card.tsx             # QuoteCard（网格）+ QuoteRow（长列表）
+│   ├── quote-card.tsx             # QuoteCard（网格）+ QuoteRow（长列表），内嵌互动栏
+│   ├── quote-actions.tsx          # 点赞 / 收藏 / 转发 / 评论入口
+│   ├── comments.tsx               # 评论区（公开可读，登录可发，本人可删）
+│   ├── auth-modal.tsx             # 登录 / 注册弹窗
+│   ├── user-menu.tsx              # 顶栏账户菜单（收藏页入口、退出）
+│   ├── favorites-list.tsx         # 「我的收藏」列表
 │   ├── theme-icon.tsx             # 主题 → lucide 图标映射
 │   └── ui.tsx                     # PageHeader / SectionHeading / Tag / Ornament
 ├── data/
@@ -54,7 +59,11 @@ src/
 │   ├── philosophers.ts            # 55 位哲学家
 │   ├── quotes.ts                  # 全部引文
 │   └── index.ts                   # 派生统计与检索函数
-└── lib/utils.ts                   # cn / 稳定哈希 / 按日取模
+├── lib/
+│   ├── utils.ts                   # cn / 稳定哈希 / 按日取模
+│   ├── supabase.ts                # Supabase 浏览器端单例（未配置时返回 null）
+│   └── auth.tsx                   # AuthProvider：会话、资料、登录弹窗入口
+└── app/favorites/page.tsx         # 我的收藏
 ```
 
 ---
@@ -99,14 +108,31 @@ src/
 | 样式 | Tailwind CSS 3.4 + CSS 变量驱动主题（颜色全部来自 `globals.css` 的 RGB 三元组） |
 | 字体 | 系统衬线字体栈（`Songti SC` / `Source Han Serif SC` / `Noto Serif SC` 优先），**零外部字体请求** |
 | 主题 | 浅色纸面为默认，`class` 策略切深色；首屏由内联脚本读取 localStorage，无白闪 |
-| 交互 | 仅 4 个客户端组件（导航、主题切换、名言筛选、随机展示），其余全部服务端渲染 |
-| 追踪 | 无统计脚本、无 Cookie、无第三方请求 |
+| 交互 | 阅读部分仅 4 个客户端组件（导航、主题切换、名言筛选、随机展示）；用户系统（登录、点赞、收藏、评论）为可选的客户端交互 |
+| 追踪 | 无统计脚本、无 Cookie；仅当配置 Supabase 后会与其 API 通信 |
 
 ### 关于 URL 结尾的斜杠
 
 `next.config.ts` 中开启了 `trailingSlash: true`，导出产物为 `quotes/index.html` 这样的目录结构，
 对任意静态服务器和本地双击打开都更稳妥。**新增站内链接时请统一以 `/` 结尾**（如 `/quotes/`），
 否则在部分静态托管上会出现 404。
+
+---
+
+## 用户系统（可选 · Supabase）
+
+登录、收藏、点赞、评论、转发依赖 Supabase（Auth + Postgres + RLS），**不配置时整站自动退化为纯阅读站**，构建与部署都不需要任何环境变量。
+
+开启步骤：
+
+1. 在 [supabase.com](https://supabase.com) 创建项目（区域建议 Singapore / Tokyo）。
+2. 打开项目的 **SQL Editor**，整段执行 [`supabase/schema.sql`](supabase/schema.sql)（建表 + 触发器 + RLS 策略，幂等可重复执行）。
+3. **Authentication → Sign In / Providers** 确认 Email 已开启；测试期可关闭 "Confirm email"。
+4. 复制 `.env.local.example` 为 `.env.local`，填入 **Project Settings → API** 里的 `Project URL` 与 `anon public` key。
+5. `pnpm dev` 即可看到顶栏的「登录」入口与名言卡片下的互动栏。
+
+> `anon` key 是设计为公开的前端密钥，数据安全由 schema.sql 里的 RLS 策略保证；
+> `service_role` key 永远不要出现在前端。部署到托管平台时，把同两个变量配到平台的环境变量里即可（构建期内联）。
 
 ---
 
@@ -117,7 +143,7 @@ pnpm build
 # 把 out/ 整个目录上传即可，无需 Node 运行时
 ```
 
-无服务器、无环境变量、无构建期网络请求。
+无服务器、无构建期网络请求；环境变量仅在开启用户系统时需要（见上一节），未配置时产物为纯静态阅读站。
 
 > 仓库以 pnpm 为准（`packageManager` 字段），CI 依赖 `pnpm-lock.yaml`。改动依赖后请提交新的
 > `pnpm-lock.yaml`，否则部署会因 `--frozen-lockfile` 校验失败。
