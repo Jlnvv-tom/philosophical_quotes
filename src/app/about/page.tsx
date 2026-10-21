@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { QrGallery } from "@/components/qr-gallery";
 import { Ornament, PageHeader } from "@/components/ui";
+import { contactQrItems } from "@/data/contact";
 import { quotes, stats } from "@/data";
 
 export const metadata: Metadata = {
@@ -105,6 +107,20 @@ export default function AboutPage() {
               引文本身属于公共领域或合理引用范畴，可自由复制、引用（建议同时核对原始出处）。
               站点的排版与设计可以借用，但请勿原样搬运为一个新的「名言站」。
             </p>
+          </section>
+
+          <Ornament className="my-16" />
+
+          <section id="author">
+            <h2 className="eyebrow">关于作者</h2>
+            <p className="mt-6 font-serif text-sm leading-8 text-ink-soft">
+              本站由一个人利用业余时间选句、核对出处、撰写编者按，排版与代码也一并自己写。
+              没有广告位，没有投稿后台，也不设登录。
+            </p>
+            <p className="mt-5 font-serif text-sm leading-8 text-ink-muted">
+              读到哪里觉得不对，或者想补一句被漏掉的话，欢迎直接联系。下面的二维码可以点开看大图。
+            </p>
+            <QrGallery items={contactQrItems} thumbSize="md" className="mt-8" />
           </section>
         </div>
 

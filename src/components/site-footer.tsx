@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { QrGallery } from "./qr-gallery";
 import { Ornament } from "./ui";
+import { contactQrItems } from "@/data/contact";
 import { stats } from "@/data";
 
 export function SiteFooter() {
@@ -67,7 +69,17 @@ export function SiteFooter() {
           </nav>
         </div>
 
-        <div className="mt-14 flex flex-col gap-3 border-t border-line-soft pt-6 font-sans text-2xs tracking-wide text-ink-faint sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-14 grid gap-8 border-t border-line-soft pt-10 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div>
+            <h2 className="eyebrow mb-3">联络</h2>
+            <p className="max-w-md font-serif text-sm leading-7 text-ink-muted">
+              勘误、增补，或只是聊聊某一句，都欢迎。点开二维码可看大图。
+            </p>
+          </div>
+          <QrGallery items={contactQrItems} />
+        </div>
+
+        <div className="mt-10 flex flex-col gap-3 border-t border-line-soft pt-6 font-sans text-2xs tracking-wide text-ink-faint sm:flex-row sm:items-center sm:justify-between">
           <p>© {year} 哲思 · 一个静态的阅读项目</p>
           <p>引文均标注出处；译文以通行中译为准，不作学术引用依据。</p>
         </div>
